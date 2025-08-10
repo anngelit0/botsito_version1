@@ -1,0 +1,90 @@
+import discord
+from discord.ext import commands
+import random
+import asyncio
+
+# Establecer permisos
+permisos = discord.Intents.default()
+permisos.message_content = True
+
+# Creación del bot
+bot = commands.Bot(command_prefix="$", intents=permisos)
+
+# ------------------------------
+# EVENTOS
+# ------------------------------
+@bot.event
+async def on_ready():
+    print("El bot está en línea.")
+
+@bot.command()
+async def hola(ctx):
+    await ctx.send(f"Hola, mi nombre es: {bot.user.name}")
+
+# 1) Comando ROLL
+@bot.command()
+async def roll(ctx, dice: str):
+    """Lanza dados en formato NdN (ej. 2d6)"""
+    try:
+        rolls, limit = map(int, dice.lower().split('d'))
+    except Exception:
+        await ctx.send("⚠ Formato inválido. Usa NdN, por ejemplo: 2d6")
+        return
+
+    resultados = [random.randint(1, limit) for _ in range(rolls)]
+    await ctx.send(f"🎲 Resultados: {', '.join(map(str, resultados))}")
+
+# 2) Comando GUESS
+@bot.command()
+async def guess(ctx):
+    """Juego: Adivina el número"""
+    numero_secreto = random.randint(1, 10)
+    await ctx.send("He pensado un número entre 1 y 10. ¡Adivina! (Escribe tu número en el chat)")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+
+    try:
+        intento = await bot.wait_for("message", check=check, timeout=15.0)
+    except asyncio.TimeoutError:
+        await ctx.send(f"⏳ Tiempo agotado. El número era {numero_secreto}.")
+        return
+
+    if int(intento.content) == numero_secreto:
+        await ctx.send("🎉 ¡Correcto! Adivinaste el número.")
+    else:
+        await ctx.send(f"❌ No era ese. El número correcto era {numero_secreto}.")
+
+# 3) Comando FACT (Historia)
+# ------------------------------
+datos_prehispanicos = [
+    "🌽 El maíz fue domesticado en Mesoamérica hace más de 9,000 años a partir del teocintle.",
+    "🗿 Los olmecas crearon las primeras cabezas colosales hace más de 3,000 años.",
+    "🏛 La ciudad de Teotihuacán fue una de las más grandes del mundo en su época, con más de 100,000 habitantes.",
+    "🪶 Los mexicas utilizaban plumas de quetzal como símbolo de poder y riqueza.",
+    "📜 Los mayas desarrollaron un sistema de escritura jeroglífica único en América.",
+    "🌋 El Popocatépetl y el Iztaccíhuatl forman parte de una leyenda prehispánica de amor trágico.",
+    "💎 El jade era más valioso que el oro para muchas culturas mesoamericanas.",
+    "🌌 Los mayas tenían observatorios astronómicos para predecir eclipses y movimientos planetarios.",
+    "🪨 Los zapotecas crearon el calendario agrícola que influyó en otras culturas mesoamericanas.",
+    "🐚 Los mexicas usaban caracoles marinos como trompetas ceremoniales en rituales."
+]
+
+@bot.command()
+async def fact(ctx):
+    """Envía un dato curioso sobre la historia prehispánica de México"""
+    await ctx.send(random.choice(datos_prehispanicos))
+
+@bot.command()
+async def opciones(ctx):
+    """Muestra las funciones disponibles del bot"""
+    comandos = bot.commands
+    mensaje = "**Menú de funciones disponibles:**\n\n"
+    for comando in comandos:
+        if not comando.hidden:
+            descripcion = comando.help if comando.help else "Sin descripción."
+            mensaje += f"**/{comando.name}** - {descripcion}\n"
+    await ctx.send(mensaje)
+
+# Ejecutar bot
+bot.run(TOKEN)
