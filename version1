@@ -86,5 +86,19 @@ async def opciones(ctx):
             mensaje += f"**/{comando.name}** - {descripcion}\n"
     await ctx.send(mensaje)
 
+@bot.command()
+async def meme(ctx):
+    lista_memes = os.listdir("img")
+
+    if random.random() < 0.8:
+        meme_random = random.choice(lista_memes[:3])  # memes 1-3
+    else:
+        meme_random = random.choice(lista_memes[3:6])  # memes 4-6
+
+    await ctx.send("Aquí tienes un meme divertido sobre programación 🤓")
+    with open(f"img/{meme_random}", "rb") as f:
+        picture = discord.File(f)
+    await ctx.send(file=picture)
+
 # Ejecutar bot
 bot.run(TOKEN)
